@@ -8,12 +8,14 @@
 #  ./pdns_zone.sh list                  --> list all zone
 #  ./pdns_zone.sh dump somedomaine.com  --> dump zone in bind format
 #
-# Require: curl + jq
+# Require: curl + jq + python + jinaj2
 
 # reflect your powerdns config here
 url_base="http://127.0.0.1:8081"
 # api key
-key=changeme
+#key=changeme
+# fetch from local config
+key=$(sed -n -e '/experimental-api-key=/ s///p' /etc/powerdns/pdns.conf)
 
 pdns_api() {
   local data=""

@@ -63,3 +63,27 @@ experimental-api-key=changeme
 ## Enhancement
 
 `pdns_zone.sh` and `gen_template.py` could be merged.
+
+
+## salt integration
+
+clone the repository and configure with your own `config.yaml`.
+
+
+`state/powerdns.sls`
+
+~~~yaml
+# command line wrapper for creating/managing domains
+{% set pdns_zone_dir = '/root/pdns_zone' %}
+pdns_zone:
+  # git clone the code
+  git.latest:
+    - name: https://github.com/opensource-expert/powerdns-shell-wrapper.git
+    - target: {{ pdns_zone_dir }}
+  file.managed:
+    - name: {{ pdns_zone_dir }}/config.yaml
+    - source: salt://powerdns/config/pdns_zone_config.yaml
+    - user: root
+    - group: root
+    - mode: 644
+~~~
