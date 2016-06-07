@@ -1,0 +1,49 @@
+{
+  "id": "example.org.",
+  "url": "/servers/localhost/zones/example.org.",
+  "name": "example.org",
+  "type": "Zone",
+  "kind": "Native",
+  "dnssec": false,
+  "soa_edit_api": "",
+  "soa_edit": "",
+  "masters": [],
+  "serial": 0,
+  "notified_serial": 0,
+  "last_check": 0,
+  "records": [
+    {
+      "name": "example.org",
+      "type": "NS",
+      "ttl": 3600,
+      "priority": 0,
+      "disabled": false,
+      "content": "ns1.example.org"
+    },
+    {
+      "name": "example.org",
+      "type": "NS",
+      "ttl": 3600,
+      "priority": 0,
+      "disabled": false,
+      "content": "ns2.example.org"
+    },
+    {
+      "name": "example.org",
+      "type": "SOA",
+      "ttl": 3600,
+      "priority": 0,
+      "disabled": false,
+      "content": "a.misconfigured.powerdns.server hostmaster.example.org 0 10800 3600 604800 3600"
+    },
+    {
+      "name": "test.example.org",
+      "type": "A",
+      "ttl": 86400,
+      "priority": 0,
+      "disabled": false,
+      "content": "192.0.5.4"
+    }
+  ],
+  "comments": []
+}
