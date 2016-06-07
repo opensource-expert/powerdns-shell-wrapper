@@ -1,0 +1,36 @@
+{
+    "comments": [
+        {
+            "account": "admin",
+            "content": "zone created by script",
+            "name": "uhuh",
+            "type": "dunno"
+        }
+    ],
+    "kind": "Native",
+    "masters": [],
+    "name": "example.net",
+    "nameservers": [
+        "ns1.example.net",
+        "ns2.example.net"
+    ],
+    "records": [
+        {
+            "content": "ns.example.net. hostmaster.example.com. 1 1800 900 604800 86400",
+            "disabled": false,
+            "name": "example.net",
+            "ttl": 86400,
+            "type": "SOA",
+            "priority" : 0
+
+        },
+        {
+            "content": "192.168.1.42",
+            "disabled": false,
+            "name": "www.example.net",
+            "ttl": 3600,
+            "type": "A",
+            "priority" : 0
+        }
+    ]
+}
