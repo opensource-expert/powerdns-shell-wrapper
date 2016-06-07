@@ -19,8 +19,8 @@ This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/
 git clone https://github.com/opensource-expert/powerdns-shell-wrapper.git
 ~~~
 
-**Note:** it requires curl, jq, and python + jinja2 (which is installed on salt minion)
-**Note 2:** the powerDNS API need to be enabled, of course
+* **Note:** it requires curl, jq, and python + jinja2 (which is installed on salt minion)
+* **Note 2:** the powerDNS API need to be enabled, of course
 
 ## configure gen_template.py
 
@@ -67,7 +67,7 @@ experimental-api-key=changeme
 
 ## salt integration
 
-clone the repository and configure with your own `config.yaml`.
+This frist state clones the repository and configure it with your own `config.yaml`.
 
 
 `state/powerdns.sls`
@@ -88,6 +88,8 @@ pdns_zone:
     - mode: 644
 ~~~
 
+This second state, run `pdns_zone.sh` with your pillar data in order to create the domain.
+
 `state/powerdns/customers_domains.sls`
 ~~~yaml
 # pdns_zone created by state/powerdns.sls above
@@ -103,4 +105,16 @@ pdns_zone:
     - onlyif:
       - ./pdns_zone.sh missing "{{ domain }}"
 {% endfor %}
+~~~
+
+pillar used:
+
+~~~yaml
+customers:
+  # Managed domains for customers
+  domains:
+    - client1-domain.fr
+    - more-domain.com
+    - somedomain.fr
+    - somedomain4.fr
 ~~~
