@@ -1,6 +1,18 @@
 #!/bin/bash
+#
+# command line wrapper to manage pdns zone
+#
+# Usage:
+#  ./pdns_zone.sh create example.net    --> create a new zone
+#  ./pdns_zone.sh delete example.net    --> delete without confirm
+#  ./pdns_zone.sh list                  --> list all zone
+#  ./pdns_zone.sh dump somedomaine.com  --> dump zone in bind format
+#
+# Require: curl + jq
 
+# reflect your powerdns config here
 url_base="http://127.0.0.1:8081"
+# api key
 key=changeme
 
 pdns_api() {
@@ -19,20 +31,20 @@ pdns_api() {
     ;;
   esac
 
-
-  # remove // 
+  # remove double: //
   local url="${1//\/\///}"
   # remove extra ^/
   url="$url_base/${url#/}"
   #echo "url: $url"
   local tmp=/tmp/pdns_api.out
-  curl -H "X-API-Key: $key" $extra "$url" | \
-    tee $tmp | jq .
-    #W2> /dev/null
+  # tee is used for dump, jq error discard
+  curl -s -H "X-API-Key: $key" $extra "$url" | \
+    tee $tmp | jq .  2> /dev/null
   if [[ $? -ne 0 ]]
   then
     cat $tmp
   fi
+  rm -f $tmp
 }
 
 case $1 in
@@ -40,6 +52,7 @@ case $1 in
     pdns_api /servers/localhost/zones | jq -r '.[].name'
     ;;
   dump)
+    # dump zone in bind format
     zone=$2
     pdns_api /servers/localhost/zones/$zone/export
     ;;
@@ -49,13 +62,14 @@ case $1 in
     ;;
   create)
     zone=$2
-    pdns_api POST zonetemplate.json /servers/localhost/zones
+    python gen_template.py $zone > zone.tmp
+    pdns_api POST zone.tmp /servers/localhost/zones
+    rm zone.tmp
     ;;
   delete)
     zone=$2
     pdns_api DELETE /servers/localhost/zones/$zone
     ;;
-  
   *)
     pdns_api "$1"
     ;;

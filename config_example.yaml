@@ -1,0 +1,7 @@
+# example, copy to config.yaml and put your change here
+ns1: 'your.master.dns.example.com'
+ns2: 'ns2.example.net'
+hostmaster: 'hostmaster.contact.domain.com'
+web_ip: '10.0.0.2'
+mailserver: 'mailserver.domain.com'
+spf: 'v=spf1 mx a ~all'
