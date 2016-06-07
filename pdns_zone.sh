@@ -72,6 +72,18 @@ case $1 in
     zone=$2
     pdns_api DELETE /servers/localhost/zones/$zone
     ;;
+  missing)
+    zone=$2
+    r=$(pdns_api /servers/localhost/zones/$zone | jq -r ".name")
+    if [[ "$r" == "$zone" ]]
+    then
+      echo PRESENT
+      exit 1
+    else
+      echo MISSING
+      exit 0
+    fi
+    ;;
   *)
     pdns_api "$1"
     ;;

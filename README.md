@@ -73,7 +73,7 @@ clone the repository and configure with your own `config.yaml`.
 `state/powerdns.sls`
 
 ~~~yaml
-# command line wrapper for creating/managing domains
+# install the command line wrapper for creating/managing domains
 {% set pdns_zone_dir = '/root/pdns_zone' %}
 pdns_zone:
   # git clone the code
@@ -86,4 +86,21 @@ pdns_zone:
     - user: root
     - group: root
     - mode: 644
+~~~
+
+`state/powerdns/customers_domains.sls`
+~~~yaml
+# pdns_zone created by state/powerdns.sls above
+# customers:domains pillar listing domain to be managed
+
+# loop over managed domain and create them if needed
+{% set customers_domains = salt['pillar.get']('customers:domains', {}) -%}
+{% for domain in customers_domains %}
+{{ domain}}:
+  cmd.run:
+    - name: ./pdns_zone.sh create "{{ domain }}"
+    - cwd: /root/pdns_zone
+    - onlyif:
+      - ./pdns_zone.sh missing "{{ domain }}"
+{% endfor %}
 ~~~
