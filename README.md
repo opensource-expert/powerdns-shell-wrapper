@@ -4,6 +4,8 @@ A small command line wrapper to manage zone via powerdns API, powerdns V3.4.
 
 This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/httpapi/README/).
 
+**Note:** Find other PowerDNS Frontends (graphic or command line) [here](https://github.com/PowerDNS/pdns/wiki/WebFrontends).
+
 ## Usage
 
 ~~~
@@ -11,6 +13,7 @@ This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/
 ./pdns_zone.sh delete example.net
 ./pdns_zone.sh list
 ./pdns_zone.sh dump somedomaine.com
+./pdns_zone.sh missing somedomaine.com
 ~~~
 
 ## Install
