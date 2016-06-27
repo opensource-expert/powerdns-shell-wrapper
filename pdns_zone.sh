@@ -49,6 +49,18 @@ pdns_api() {
   rm -f $tmp
 }
 
+usage() {
+  # auto help with top comment
+  sed -n -e '/^# Usage:/,/^$/ s/^# \?//p' < $0
+}
+
+if [[ -z "$1" || "$1" == --help ]]
+then
+  usage
+  exit 0
+fi
+
+
 case $1 in
   list)
     pdns_api /servers/localhost/zones | jq -r '.[].name'
