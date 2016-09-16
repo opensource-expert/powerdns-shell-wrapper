@@ -4,8 +4,9 @@
 # genenate a JSON output for powerdns for creating a zone
 # using API, for powerdns V3.4
 #
-# Usage: gen_template.py somedomain.com
+# Usage: gen_template.py somedomain.com [TEMPLATE_NAME]
 #   gen_template.py somedomain.com > some_file
+#   gen_template.py somedomain.com zonetemplate_slave.json [MASTER_IP]
 #
 # Note: See config.yaml for override the value in the template
 
@@ -17,6 +18,7 @@ import sys
 from jinja2 import Environment, FileSystemLoader
 import yaml
 import time
+import json
 
 #re.UNICODE
 #re.LOCALE
@@ -25,6 +27,15 @@ def main():
     if len(sys.argv) == 1:
         print("missing argument")
         sys.exit(1)
+
+    if len(sys.argv) >= 3:
+      template_file = sys.argv[2]
+    else:
+      template_file = 'zonetemplate.json'
+
+    master_ip = None
+    if len(sys.argv) == 4:
+      master_ip = sys.argv[3]
 
     d = {}
     d['domain'] = sys.argv[1]
@@ -40,6 +51,9 @@ def main():
 
     d['date'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
+    # set masters must be in array form
+    d['masters'] = '[ "10.0.2.22" ]'
+
     # load local config, for override dumy default parameter
     try:
         f = open('config.yaml')
@@ -51,12 +65,16 @@ def main():
     # merge defaut and local data
     d.update(d2)
 
+    if master_ip:
+      d['masters'] = master_ip.split(',')
+
     me = os.path.realpath(__file__)
     template_dir = os.path.dirname(me) + '/.'
     #print("# me: %s" % me)
 
     env = Environment(loader=FileSystemLoader(template_dir))
-    template = env.get_template('zonetemplate.json')
+    env.filters['to_json'] = json.dumps
+    template = env.get_template(template_file)
 
     print(template.render(d))
 

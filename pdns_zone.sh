@@ -3,12 +3,15 @@
 # command line wrapper to manage pdns zone
 #
 # Usage:
-#  ./pdns_zone.sh create example.net    --> create a new zone
-#  ./pdns_zone.sh delete example.net    --> delete without confirm
-#  ./pdns_zone.sh list                  --> list all zone
-#  ./pdns_zone.sh dump somedomaine.com  --> dump zone in bind format
+#  ./pdns_zone.sh create example.net                       --> create a new zone
+#  ./pdns_zone.sh delete example.net                       --> delete without confirm
+#  ./pdns_zone.sh list                                     --> list all zone
+#  ./pdns_zone.sh dump somedomaine.com                     --> dump zone in bind format
+#  ./pdns_zone.sh json somedomaine.com                     --> dump zone in json format
+#  ./pdns_zone.sh add_slave_zone somedomaine.com master_ip --> add as slave of master_ip
 #
 # Require: curl + jq + python + jinaj2
+# See API for pdns 3.4: https://doc.powerdns.com/3/httpapi/README/
 
 # reflect your powerdns config here
 url_base="http://127.0.0.1:8081"
@@ -71,6 +74,7 @@ case $1 in
     pdns_api /servers/localhost/zones/$zone/export
     ;;
   json)
+    # dump zone in json format, suitable to be inputed back
     zone=$2
     pdns_api /servers/localhost/zones/$zone
     ;;
@@ -96,7 +100,18 @@ case $1 in
       exit 0
     fi
     ;;
+  add_slave_zone)
+    # insert given zone as a simple slave zone (useful for transfer)
+    zone=$2
+    master_ip=$3
+    python gen_template.py $zone zonetemplate_slave.json $3 > zone.tmp
+    pdns_api POST zone.tmp /servers/localhost/zones
+    rm zone.tmp
+
+#URL: /servers/:server_id/zones/:zone_id/axfr-retrieve
+    ;;
   *)
+    # free pdns_api command
     pdns_api "$1"
     ;;
 esac
