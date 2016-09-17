@@ -21,7 +21,6 @@ from jinja2 import Environment, FileSystemLoader
 import yaml
 import time
 import json
-import time
 
 #re.UNICODE
 #re.LOCALE
