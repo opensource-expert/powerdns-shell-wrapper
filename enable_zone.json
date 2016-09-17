@@ -1,0 +1,21 @@
+{ "rrsets":
+  [
+    {
+      "name": "{{ domain }}",
+      "type": "SOA",
+      "changetype": "REPLACE",
+      "records":
+        [
+          {{ soa | to_json }}
+        ],
+      "comments":
+        [
+          {
+            "account": "salt master",
+            "content": "domain is enabled",
+            "modfied_at": {{ timestamp }}
+          }
+        ]
+    }
+  ]
+}

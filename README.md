@@ -1,19 +1,33 @@
 # pdns_zone.sh
 
-A small command line wrapper to manage zone via powerdns API, powerdns V3.4.
+A small command line wrapper to manage zone via powerdns use only API, powerdns V3.4.
 
 This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/httpapi/README/).
 
 **Note:** Find other PowerDNS Frontends (graphic or command line) [here](https://github.com/PowerDNS/pdns/wiki/WebFrontends).
 
+**Lecteur Francophone:** Demandez moi la traduction si nécessaire.
+
 ## Usage
 
+~~~bash
+./pdns_zone.sh create example.net                       # --> create a new zone from template
+./pdns_zone.sh delete example.net                       # --> delete without confirm
+./pdns_zone.sh list                                     # --> list all zones
+./pdns_zone.sh dump somedomaine.com                     # --> dump zone in bind format
+./pdns_zone.sh json somedomaine.com                     # --> dump zone in json format
+./pdns_zone.sh add_slave_zone somedomaine.com 1.2.3.4   # --> add as slave of master_ip
 ~~~
-./pdns_zone.sh create example.net
-./pdns_zone.sh delete example.net
-./pdns_zone.sh list
-./pdns_zone.sh dump somedomaine.com
-./pdns_zone.sh missing somedomaine.com
+
+Save and restore a zone in json:
+
+~~~bash
+# dump json
+./pdns_zone.sh json somedomaine.com > somedomaine_com.json
+# delete
+./pdns_zone.sh delete somedomaine.com
+# restore (free API call)
+./pdns_zone.sh POST somedomaine_com.json /servers/localhost/zones
 ~~~
 
 ## Install
@@ -22,10 +36,11 @@ This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/
 git clone https://github.com/opensource-expert/powerdns-shell-wrapper.git
 ~~~
 
-* **Note:** it requires curl, jq, and python + jinja2 (which is installed on salt minion)
-* **Note 2:** the powerDNS API need to be enabled, of course
+* **Note:** it requires curl, jq, and python + jinja2 + json + yaml (which are all installed on a salt minion)
+* **Note 2:** the powerDNS API need to be enabled, of course.
+* **Note 3:** must be executed in the folder where json template are, also create some temporary json in the folder.
 
-## configure gen_template.py
+## Configure `gen_template.py`
 
 `gen_template.py` is a python script that build a JSON template (See: `zonetemplate.json`) to be send to powerDNS API.
 
@@ -41,10 +56,26 @@ mailserver: 'mailserver.domain.com'
 spf: 'v=spf1 mx a ~all'
 ~~~
 
-you can preview the JSON on stdout with:
+## Preview the pdns API JSON on stdout
 
 ~~~
 python gen_template.py somedomain.com
+~~~
+
+It also support extra template and an an optional IP as argument: (used for `add_slave_zone`)
+
+~~~
+python gen_template.py somedomain.com zonetemplate_slave.json 1.22.3.4
+~~~
+
+Disabling a domain with SOA record disabled
+~~~
+python gen_template.py somedomain.com disable_zone.json
+~~~
+
+Enabling a disabled domain
+~~~
+python gen_template.py somedomain.com enable_zone.json
 ~~~
 
 ## Enable powerDNS API for v3.4
@@ -66,6 +97,10 @@ experimental-api-key=changeme
 ## Enhancement
 
 `pdns_zone.sh` and `gen_template.py` could be merged.
+Argument parsing is really basic, could be done with [docopt](https://github.com/docopt) for example.
+Some data are still hardcoded in the code.
+Refactor code enabling/disabling zone.
+Allow fullpath excution and temporary file stored in /tmp
 
 
 ## salt integration

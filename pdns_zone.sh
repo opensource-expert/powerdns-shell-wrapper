@@ -5,7 +5,7 @@
 # Usage:
 #  ./pdns_zone.sh create example.net                       --> create a new zone
 #  ./pdns_zone.sh delete example.net                       --> delete without confirm
-#  ./pdns_zone.sh list                                     --> list all zone
+#  ./pdns_zone.sh list                                     --> list all zones
 #  ./pdns_zone.sh dump somedomaine.com                     --> dump zone in bind format
 #  ./pdns_zone.sh json somedomaine.com                     --> dump zone in json format
 #  ./pdns_zone.sh add_slave_zone somedomaine.com master_ip --> add as slave of master_ip
@@ -33,6 +33,11 @@ pdns_api() {
   DELETE)
     shift 1
     extra="-X DELETE"
+    ;;
+  PATCH)
+    data=$2
+    shift 2
+    extra="-X PATCH --data @$data"
     ;;
   esac
 
@@ -66,7 +71,13 @@ fi
 
 case $1 in
   list)
-    pdns_api /servers/localhost/zones | jq -r '.[].name'
+    for z in $(pdns_api /servers/localhost/zones | jq -r '.[].name')
+    do
+      active=""
+      pdns_api "/servers/localhost/zones/$z/export" | grep -q SOA || active=disabled
+      # colored TERM disabled entry
+      echo -e "$z \033[31;1m$active\033[0m"
+    done
     ;;
   dump)
     # dump zone in bind format
@@ -107,11 +118,17 @@ case $1 in
     python gen_template.py $zone zonetemplate_slave.json $3 > zone.tmp
     pdns_api POST zone.tmp /servers/localhost/zones
     rm zone.tmp
-
-#URL: /servers/:server_id/zones/:zone_id/axfr-retrieve
+    ;;
+  disable|enable)
+    zone=$2
+    # fetch SOA record for the zone
+    soa="$(pdns_api /servers/localhost/zones/$zone | jq '.records[]|select(.type=="SOA")')"
+    python gen_template.py $zone ${1}_zone.json "$soa" > zone.tmp
+    pdns_api PATCH zone.tmp /servers/localhost/zones/$zone
+    rm zone.tmp
     ;;
   *)
     # free pdns_api command
-    pdns_api "$1"
+    pdns_api "$@"
     ;;
 esac

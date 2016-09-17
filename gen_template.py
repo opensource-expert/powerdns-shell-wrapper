@@ -7,6 +7,8 @@
 # Usage: gen_template.py somedomain.com [TEMPLATE_NAME]
 #   gen_template.py somedomain.com > some_file
 #   gen_template.py somedomain.com zonetemplate_slave.json [MASTER_IP]
+#   gen_template.py somedomain.com disable_zone.json "json_string_SOA"
+#   gen_template.py somedomain.com enable_zone.json "json_string_SOA"
 #
 # Note: See config.yaml for override the value in the template
 
@@ -19,6 +21,7 @@ from jinja2 import Environment, FileSystemLoader
 import yaml
 import time
 import json
+import time
 
 #re.UNICODE
 #re.LOCALE
@@ -34,8 +37,16 @@ def main():
       template_file = 'zonetemplate.json'
 
     master_ip = None
+    soa = {}
     if len(sys.argv) == 4:
-      master_ip = sys.argv[3]
+      if template_file == 'disable_zone.json':
+        soa = json.loads(sys.argv[3])
+        soa['disabled'] = True
+      elif template_file == 'enable_zone.json':
+        soa = json.loads(sys.argv[3])
+        soa['disabled'] = False
+      else:
+        master_ip = sys.argv[3]
 
     d = {}
     d['domain'] = sys.argv[1]
@@ -50,9 +61,12 @@ def main():
     d['spf'] = 'v=spf1 mx a ~all'
 
     d['date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    d['soa'] = soa
 
     # set masters must be in array form
     d['masters'] = '[ "10.0.2.22" ]'
+
+    d['timestamp'] = int(time.time())
 
     # load local config, for override dumy default parameter
     try:
