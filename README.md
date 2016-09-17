@@ -1,6 +1,6 @@
 # pdns_zone.sh
 
-A small command line wrapper to manage zone via powerdns use only API, powerdns V3.4.
+A small command line wrapper to manage zone via powerdns, use only API, powerdns V3.4.
 
 This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/httpapi/README/).
 
@@ -69,14 +69,45 @@ python gen_template.py somedomain.com zonetemplate_slave.json 1.22.3.4
 ~~~
 
 Disabling a domain with SOA record disabled
-~~~
-python gen_template.py somedomain.com disable_zone.json
+
+~~~bash
+./pdns_zone.sh create somedomaine.com
+# extract the SOA
+./pdns_zone.sh json somedomaine.com | jq '.records[]|select(.type=="SOA")' > soa
+
+python gen_template.py somedomaine.com disable_zone.json "$(cat soa)"
 ~~~
 
-Enabling a disabled domain
+will output:
+~~~json
+{ "rrsets":
+  [
+    {
+      "name": "somedomaine.com",
+      "type": "SOA",
+      "changetype": "REPLACE",
+      "records":
+        [
+          {"disabled": true, "name": "somedomaine.com", "priority": 0, "ttl": 86400, "content": "ns2.example.net. hostmaster.example.net. 1 1800 900 604800 86400", "type": "SOA"}
+        ],
+      "comments":
+        [
+          {
+            "account": "salt master",
+            "content": "domain is disabled",
+            "modfied_at": 1474133154
+          }
+        ]
+    }
+  ]
+}
 ~~~
-python gen_template.py somedomain.com enable_zone.json
+
+Enabling a zone :
 ~~~
+python gen_template.py somedomaine.com enable_zone.json "$(cat soa)"
+~~~
+
 
 ## Enable powerDNS API for v3.4
 
