@@ -62,13 +62,13 @@ spf: 'v=spf1 mx a ~all'
 python gen_template.py somedomain.com
 ~~~
 
-It also support extra template and an an optional IP as argument: (used for `add_slave_zone`)
+It also supports extra template and an optional IP as argument: (used for `add_slave_zone`)
 
 ~~~
 python gen_template.py somedomain.com zonetemplate_slave.json 1.22.3.4
 ~~~
 
-Disabling a domain with SOA record disabled
+JSON for Disabling a domain (by disabling its SOA record)
 
 ~~~bash
 ./pdns_zone.sh create somedomaine.com
@@ -111,7 +111,7 @@ python gen_template.py somedomaine.com enable_zone.json "$(cat soa)"
 
 ## Enable powerDNS API for v3.4
 
-/etc/powerdns/pdns.conf
+`/etc/powerdns/pdns.conf`
 
 ~~~
 # API enable
@@ -127,11 +127,11 @@ experimental-api-key=changeme
 
 ## Enhancement
 
-`pdns_zone.sh` and `gen_template.py` could be merged.
-Argument parsing is really basic, could be done with [docopt](https://github.com/docopt) for example.
-Some data are still hardcoded in the code.
-Refactor code enabling/disabling zone.
-Allow fullpath excution and temporary file stored in /tmp
+* `pdns_zone.sh` and `gen_template.py` could be merged.
+* Argument parsing is really basic, could be done with [docopt](https://github.com/docopt) for example.
+* Some data are still hardcoded in the code.
+* Refactor code enabling/disabling zone.
+* Allow fullpath excution and temporary file stored in /tmp
 
 
 ## salt integration
@@ -157,7 +157,7 @@ pdns_zone:
     - mode: 644
 ~~~
 
-This second state, run `pdns_zone.sh` with your pillar data in order to create the domain.
+This second state, run `pdns_zone.sh` with your pillar data in order to create managed domains.
 
 `state/powerdns/customers_domains.sls`
 ~~~yaml
