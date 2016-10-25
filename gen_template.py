@@ -6,11 +6,17 @@
 #
 # Usage: gen_template.py somedomain.com [TEMPLATE_NAME]
 #   gen_template.py somedomain.com > some_file
-#   gen_template.py somedomain.com zonetemplate_slave.json [MASTER_IP]
+#   gen_template.py somedomain.com zonetemplate_slave.json ["json_string_config"]
 #   gen_template.py somedomain.com disable_zone.json "json_string_SOA"
 #   gen_template.py somedomain.com enable_zone.json "json_string_SOA"
 #
 # Note: See config.yaml for override the value in the template
+#
+# json_string_config can be:
+#
+# { "master_ip" : "12.2.2.4" , "mailserver" : "mail.domain.tld" }
+# ""
+# one or both
 
 from __future__ import absolute_import
 
@@ -31,11 +37,14 @@ def main():
         sys.exit(1)
 
     if len(sys.argv) >= 3:
+      # create zone
       template_file = sys.argv[2]
     else:
       template_file = 'zonetemplate.json'
 
+    # MASTER_IP is optional
     master_ip = None
+    mailserver = None
     soa = {}
     if len(sys.argv) == 4:
       if template_file == 'disable_zone.json':
@@ -45,7 +54,10 @@ def main():
         soa = json.loads(sys.argv[3])
         soa['disabled'] = False
       else:
-        master_ip = sys.argv[3]
+        if len(sys.argv[3]) > 0:
+          cmd_line_json = json.loads(sys.argv[3])
+          master_ip = cmd_line_json.get('master_ip', master_ip)
+          mailserver = cmd_line_json.get('mailserver', mailserver)
 
     d = {}
     d['domain'] = sys.argv[1]
@@ -78,8 +90,12 @@ def main():
     # merge defaut and local data
     d.update(d2)
 
+    # final command line overwrite
     if master_ip:
       d['masters'] = master_ip.split(',')
+
+    if mailserver:
+      d['mailserver'] = mailserver
 
     me = os.path.realpath(__file__)
     template_dir = os.path.dirname(me) + '/.'

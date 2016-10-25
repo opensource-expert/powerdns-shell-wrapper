@@ -3,7 +3,7 @@
 # command line wrapper to manage pdns zone
 #
 # Usage:
-#  ./pdns_zone.sh create example.net                       --> create a new zone
+#  ./pdns_zone.sh create example.net [mailserver.tld]      --> create a new zone
 #  ./pdns_zone.sh delete example.net                       --> delete without confirm
 #  ./pdns_zone.sh list                                     --> list all zones
 #  ./pdns_zone.sh dump somedomaine.com                     --> dump zone in bind format
@@ -91,7 +91,13 @@ case $1 in
     ;;
   create)
     zone=$2
-    python gen_template.py $zone > zone.tmp
+    mailserver=$3
+    extra=""
+    if [[ ! -z "$mailserver" ]]
+    then
+      extra="{ \"mailserver\" : \"$mailserver\" }"
+    fi
+    python gen_template.py $zone zonetemplate.json "$extra" > zone.tmp
     pdns_api POST zone.tmp /servers/localhost/zones
     rm zone.tmp
     ;;
@@ -115,16 +121,18 @@ case $1 in
     # insert given zone as a simple slave zone (useful for transfer)
     zone=$2
     master_ip=$3
-    python gen_template.py $zone zonetemplate_slave.json $3 > zone.tmp
+    python gen_template.py $zone zonetemplate_slave.json "{ \"master_ip\" : \"$master_ip\" }" > zone.tmp
     pdns_api POST zone.tmp /servers/localhost/zones
     rm zone.tmp
     ;;
   disable|enable)
+    template=${1}_zone.json
     zone=$2
     # fetch SOA record for the zone
     soa="$(pdns_api /servers/localhost/zones/$zone | jq '.records[]|select(.type=="SOA")')"
-    python gen_template.py $zone ${1}_zone.json "$soa" > zone.tmp
-    pdns_api PATCH zone.tmp /servers/localhost/zones/$zone
+    python gen_template.py $zone $template "$soa" > zone.tmp
+    # excute and filter on comment
+    pdns_api PATCH zone.tmp /servers/localhost/zones/$zone | jq '.comments[]|select(.type=="SOA").content'
     rm zone.tmp
     ;;
   *)
