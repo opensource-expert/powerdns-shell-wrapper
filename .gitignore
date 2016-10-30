@@ -1,2 +1,4 @@
 config.yaml
 .*.swp
+*.pyc
+test/.cache/

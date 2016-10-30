@@ -13,6 +13,8 @@
 # Require: curl + jq + python + jinaj2
 # See API for pdns 3.4: https://doc.powerdns.com/3/httpapi/README/
 
+[[ "$1" == "--help" || "$1" == "-h" || "$1" == 'help' ]] && { sed -n -e '/^# Usage:/,/^$/ s/^# \?//p' < $0; exit; }
+
 # reflect your powerdns config here
 url_base="http://127.0.0.1:8081"
 # api key
@@ -91,11 +93,10 @@ case $1 in
     ;;
   create)
     zone=$2
-    mailserver=$3
-    extra=""
-    if [[ ! -z "$mailserver" ]]
+    extra="$3"
+    if [[ -z "$extra" ]]
     then
-      extra="{ \"mailserver\" : \"$mailserver\" }"
+      extra="{}"
     fi
     python gen_template.py $zone zonetemplate.json "$extra" > zone.tmp
     pdns_api POST zone.tmp /servers/localhost/zones
@@ -133,6 +134,20 @@ case $1 in
     python gen_template.py $zone $template "$soa" > zone.tmp
     # excute and filter on comment
     pdns_api PATCH zone.tmp /servers/localhost/zones/$zone | jq '.comments[]|select(.type=="SOA").content'
+    rm zone.tmp
+    ;;
+  update)
+    # inc soa serial record
+    template=update_zone.json
+    zone=$2
+    # fetch SOA record for the zone
+    soa="$(pdns_api /servers/localhost/zones/$zone | jq '.records[]|select(.type=="SOA")' | \
+      perl -p -e "if(/\"content\"/) { s/(\\.\\s+)(\\d+)/\$1.(\$2+1)/e;}")"
+    if python gen_template.py $zone $template "$soa" > zone.tmp
+    then 
+      # excute and filter on comment
+      pdns_api PATCH zone.tmp /servers/localhost/zones/$zone
+    fi
     rm zone.tmp
     ;;
   *)

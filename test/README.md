@@ -5,3 +5,4 @@ TODO: test with bats
 ./pdns_zone.sh delete somedomaine.com
 # exemple dump
 ./pdns_zone.sh json atelierbacchetta.com
+./pdns_zone.sh create annecy-viande.fr
