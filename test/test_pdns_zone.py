@@ -3,20 +3,31 @@
 import sys
 sys.path.append('..')
 import requests
+from tempfile import NamedTemporaryFile
+
 
 import pdns_zone
 
-def test_read_apikey():
+def _create_pdns_conf(name):
+    f = open(name, "wt")
+    f.write("experimental-api-key=some-test-key")
+    f.close()
+
+def test_read_apikey(mocker):
+    fname = NamedTemporaryFile()
+    _create_pdns_conf(fname.name)
     p = pdns_zone.pdns_zone()
-    k = p.read_apikey()
+    k = p.read_apikey(fname.name)
     assert len(k) > 0
+    assert k == 'some-test-key'
 
 def test_exec_pdns_api(mocker):
     p = pdns_zone.pdns_zone()
-    p.read_apikey()
     mocker.patch('requests.get')
 
-    k = p.key
+    # fake key : p.read_apikey()
+    k = 'some-key'
+    p.key = k
     h = { "X-API-Key" : k }
 
     # list
@@ -28,5 +39,4 @@ def test_exec_pdns_api(mocker):
 
     r = p.exec_pdns_api('GET', rest_url, text=True)
 
-    assert r == 'get().text'
 

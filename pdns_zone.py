@@ -34,10 +34,12 @@ class pdns_zone:
         # api key
         self.key = None
 
-    def read_apikey(self):
+    def read_apikey(self, pdns_conf=None):
         ## fetch from local config
         #key=$(sed -n -e '/experimental-api-key=/ s///p' /etc/powerdns/pdns.conf)
-        f = open('/etc/powerdns/pdns.conf')
+        if pdns_conf == None:
+            pdns_conf = '/etc/powerdns/pdns.conf'
+        f = open(pdns_conf)
         regxep = r'experimental-api-key=(.+)'
         for l in f:
             m = re.search(regxep, l)
