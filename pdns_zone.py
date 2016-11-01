@@ -75,10 +75,13 @@ class pdns_zone:
             raise ValueError('action unknown: %s' % action)
 
         if r.ok:
-            if text:
-                return r.text
+            if action == 'GET':
+                if text:
+                    return r.text
+                else:
+                    return r.json()
             else:
-                return r.json()
+                return r
         else:
             raise ValueError('url returned an error: %s:\n%s\n---\n%s' % (call_url, r.headers, r.text))
 
@@ -107,9 +110,11 @@ class pdns_zone:
 
         r = self.exec_pdns_api('POST', '/servers/localhost/zones', json_data=zone_data)
 
+        return {'status_code' : r.status_code, 'json_data' : zone_data }
+
     def delete_zone(self, zone):
         try:
-            r = self.exec_pdns_api('DELETE', '/servers/localhost/zones/%s' % zone, text=True)
+            r = self.exec_pdns_api('DELETE', '/servers/localhost/zones/%s' % zone)
         except ValueError as e:
             print(e)
 
@@ -184,6 +189,7 @@ if __name__ == '__main__':
     print(arguments)
     p = pdns_zone()
     p.read_apikey()
+
     if arguments['list']:
         p.list_zones()
     elif arguments['dump']:
