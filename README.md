@@ -1,8 +1,6 @@
 # pdns_zone.py
 
-**/!\** refactoring to full python code, some bash version code may not work yet.
-
-A small command line wrapper to manage zone via powerdns, use only API, powerdns V3.4.
+Shell command line wrapper to manage DNS zones for PowerDNS, use only API, for powerdns V3.4.
 
 This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/httpapi/README/).
 
@@ -21,16 +19,12 @@ This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/
 ./pdns_zone.py add_slave_zone somedomaine.com 1.2.3.4   # --> add as slave of master_ip
 ~~~
 
-Save and restore a zone in json (does it works as is?)
+See full arguments available with:
 
 ~~~bash
-# dump json
-./pdns_zone.py json somedomaine.com > somedomaine_com.json
-# delete
-./pdns_zone.py delete somedomaine.com
-# restore (free API call) NOT YET in Python
-./pdns_zone.py POST somedomaine_com.json /servers/localhost/zones
+./pdns_zone.py --help
 ~~~
+
 
 ## Install
 
@@ -44,6 +38,7 @@ pip install docopt
 
 ## Configure `config.yaml`
 
+yaml keys are used in jinja templates.
 
 ~~~yaml
 # example, copy to config.yaml and put your change here
@@ -55,18 +50,35 @@ mailserver: 'mailserver.domain.com'
 spf: 'v=spf1 mx a ~all'
 ~~~
 
-## Preview the pdns API JSON on stdout
 
-**TODO:** to be done with main wrapper
+## Tips
+
+### Save and restore a zone in json
+
+~~~bash
+# dump json records, Note json_records remove actual NS records
+./pdns_zone.py json_records somedomain.fr > somedomain.fr-records
+# delete
+./pdns_zone.py delete somedomain.fr
+# build retore template
+./pdns_zone.py gen_template restore_zone.json somedomain.fr \
+    "{\"records\" : $(cat somedomain.fr-records) }" \
+    > somedomain.fr-restore.json
+# use API to restore
+./pdns_zone.py api POST /servers/localhost/zones "$(cat somedomain.fr-restore.json)"
+~~~
+
+### Preview the pdns API JSON on stdout
 
 ~~~
-./pdns_zone.py gen_template somedomain.com
+./pdns_zone.py gen_template zonetemplate.json somedomain.com
 ~~~
 
-It also supports extra template and an optional IP as argument: (used for `add_slave_zone`)
+You can pass any override argument in JSON:
 
 ~~~
-./pdns_zone.py gen_template somedomain.com '{ "template" : "zonetemplate_slave.json", "master_ip" : "1.22.3.4" }'
+./pdns_zone.py gen_template restore_zone.json somedomain.com \
+    "{ \"records\" : $(cat somefile), \"ns1\" : \"ns1.my.net\" }"
 ~~~
 
 
@@ -80,7 +92,10 @@ JSON for Disabling a domain (by disabling its SOA record)
 # extract the SOA
 ./pdns_zone.py json somedomaine.com | jq '.records[]|select(.type=="SOA")' > soa
 
-./pdns_zone.py gen_template somedomain.com '{ "template" : "disable_zone.json", "soa" : "$(cat soa)" }'
+# edit soa and disable
+
+# generating JSON
+./pdns_zone.py gen_template disable_zone.json somedomain.com "{ \"soa\" : $(cat soa) }"
 ~~~
 
 will output:
@@ -88,29 +103,24 @@ will output:
 { "rrsets":
   [
     {
-      "name": "somedomaine.com",
+      "name": "somedomain.com",
       "type": "SOA",
       "changetype": "REPLACE",
       "records":
         [
-          {"disabled": true, "name": "somedomaine.com", "priority": 0, "ttl": 86400, "content": "ns2.example.net. hostmaster.example.net. 1 1800 900 604800 86400", "type": "SOA"}
+          {"disabled": false, "name": "somedomaine.com", "priority": 0, "ttl": 86400, "content": "dns0.webannecy.com. hostmaster.webannecy.com. 1 1800 900 604800 86400", "type": "SOA"}
         ],
       "comments":
         [
           {
             "account": "salt master",
             "content": "domain is disabled",
-            "modfied_at": 1474133154
+            "modfied_at": 1478010986
           }
         ]
     }
   ]
 }
-~~~
-
-Enabling a zone :
-~~~
-./pdns_zone.py gen_template somedomain.com '{ "template" : "enable_zone.json", "soa" : "$(cat soa)" }'
 ~~~
 
 

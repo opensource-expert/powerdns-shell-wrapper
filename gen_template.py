@@ -5,32 +5,26 @@
 # generate a JSON output for powerdns for creating a zone
 # using API, for powerdns V3.4
 #
-# Usage: gen_template.py somedomain.com [TEMPLATE_NAME]
-#   gen_template.py somedomain.com > some_file
-#   gen_template.py somedomain.com zonetemplate_slave.json ["json_string_config"]
-#   gen_template.py somedomain.com disable_zone.json "json_string_SOA"
-#   gen_template.py somedomain.com enable_zone.json "json_string_SOA"
+# Usage: 
+#   ./pdns_zone.py gen_template TEMPLATE_NAME somedomain.com
+#   ./pdns_zone.py gen_template TEMPLATE_NAME somedomain.com > some_file
+#   ./pdns_zone.py gen_template TEMPLATE_NAME somedomain.com ['{ "exta" : "json_string_config" }']
+#   ./pdns_zone.py gen_template enable_zone.json somedomain.com "json_string_SOA"
 #
 # Note: See config.yaml for override the value in the template
 #
 # json_string_config can be:
 #
 # { "master_ip" : "12.2.2.4" , "mailserver" : "mail.domain.tld" }
-# ""
-# one or both
+# { "soa" : "string from show_SOA" }
 
 from __future__ import absolute_import
 
 import os
-#import re
-import sys
 from jinja2 import Environment, FileSystemLoader
 import yaml
 import time
 import json
-
-#re.UNICODE
-#re.LOCALE
 
 
 class gen_template:
@@ -80,11 +74,15 @@ class gen_template:
         return config_exists
 
     def generate(self, zone, json_data=None):
+        # compute local script location to find template_dir
         me = os.path.realpath(__file__)
         template_dir = os.path.dirname(me) + '/.'
-        #print("# me: %s" % me)
 
         self.d['domain'] = zone
+
+        # override with json
+        if json_data:
+            self.d.update(json.loads(json_data))
 
         env = Environment(loader=FileSystemLoader(template_dir))
         # add to_json filer in jinja2
@@ -93,17 +91,8 @@ class gen_template:
 
         json_str = template.render(self.d)
 
-        print(json_str)
-
         return json_str
 
-
-    def override_if(self, json_key):
-        if self.cmd_line_json.get(json_key):
-            self.d[json_key] = self.cmd_line_json[json_key]
-            return True
-        else:
-            return False
 
 def main():
     if len(sys.argv) == 1:

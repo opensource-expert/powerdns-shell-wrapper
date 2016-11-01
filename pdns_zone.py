@@ -6,15 +6,27 @@
 Command line wrapper to manage pdns zone (usable with salt)
 
 Usage:
- ./pdns_zone.sh create ZONE [JSON_EXTRA]
- ./pdns_zone.sh delete ZONE
- ./pdns_zone.sh list
- ./pdns_zone.sh dump ZONE
- ./pdns_zone.sh json ZONE
- ./pdns_zone.sh add_slave_zone ZONE MASTER_IP
- ./pdns_zone.sh help | -h | --help
+ ./pdns_zone.py create ZONE [JSON_EXTRA]
+ ./pdns_zone.py delete ZONE
+ ./pdns_zone.py missing ZONE
+ ./pdns_zone.py list
+ ./pdns_zone.py dump ZONE
+ ./pdns_zone.py json ZONE
+ ./pdns_zone.py json_records ZONE
+ ./pdns_zone.py (enable|disable|update) ZONE
+ ./pdns_zone.py add_slave_zone ZONE MASTER_IP
+ ./pdns_zone.py gen_template TEMPLATE ZONE [JSON_EXTRA]
+ ./pdns_zone.py show_SOA ZONE
+ ./pdns_zone.py api <args>...
+ ./pdns_zone.py (help | -h | --help)
+
+Options:
+  JSON_EXTRA    is a JSON string passed to gen_template
+  ZONE          is a tdl domain name
+
+Note:
+  json_records dont keep NS records
 """
-# Require: curl + jq + python + jinaj2
 # See API for pdns 3.4: https://doc.powerdns.com/3/httpapi/README/
 
 
@@ -24,15 +36,17 @@ from __future__ import print_function
 from docopt import docopt
 import re
 import requests
+import sys
+import json
 
 import gen_template
 
 class pdns_zone:
-    def __init__(self):
+    def __init__(self, key=None):
         # reflect your powerdns config here
         self.url_base = "http://127.0.0.1:8081"
         # api key
-        self.key = None
+        self.key = key
 
     def read_apikey(self, pdns_conf=None):
         ## fetch from local config
@@ -88,24 +102,37 @@ class pdns_zone:
     def list_zones(self):
         l = self.exec_pdns_api('GET', '/servers/localhost/zones')
         for z in l:
-            zone_info = self.exec_pdns_api('GET', '/servers/localhost/zones/' + z['name'])
+            zone_info = self.get_json_zone(z['name'])
+            txt = ''
+
             # look if SOA record is disabled or not
-            disabled = list(filter(lambda r : r['type'] == 'SOA', zone_info['records']))[0]['disabled']
+            try:
+                # happen on slave zone not yet fetched
+                disabled = self.get_SOA_from_json(zone_info)['disabled']
+            except IndexError as e:
+                txt = " (failed SOA lookup)"
+                disabled = False
+
             if disabled:
                 txt = ' \033[31;1m disabled\033[0m'
-            else:
-                txt = ''
+
             print('%s%s' % (z['name'], txt))
 
     def dump_zone(self, zone):
         print(self.exec_pdns_api('GET', '/servers/localhost/zones/%s/export' % zone, text=True))
+
+    def get_SOA_from_json(self, zone_info):
+        return list(filter(lambda r : r['type'] == 'SOA', zone_info['records']))[0]
+
+    def get_json_zone(self, zone):
+        return self.exec_pdns_api('GET', '/servers/localhost/zones/%s' % zone)
 
     def dump_json(self, zone):
         print(self.exec_pdns_api('GET', '/servers/localhost/zones/%s' % zone, text=True))
 
     def create_zone(self, zone, json_data=None):
         gen = gen_template.gen_template()
-        gen.load_config('config.yaml')
+        gen.load_config()
         zone_data = gen.generate(zone, json_data)
 
         r = self.exec_pdns_api('POST', '/servers/localhost/zones', json_data=zone_data)
@@ -118,75 +145,91 @@ class pdns_zone:
         except ValueError as e:
             print(e)
 
-#case $1 in
-#  create)
-#    zone=$2
-#    extra="$3"
-#    if [[ -z "$extra" ]]
-#    then
-#      extra="{}"
-#    fi
-#    python gen_template.py $zone zonetemplate.json "$extra" > zone.tmp
-#    pdns_api POST zone.tmp /servers/localhost/zones
-#    rm zone.tmp
-#    ;;
-#  delete)
-#    zone=$2
-#    pdns_api DELETE /servers/localhost/zones/$zone
-#    ;;
-#  missing)
-#    zone=$2
-#    r=$(pdns_api /servers/localhost/zones/$zone | jq -r ".name")
-#    if [[ "$r" == "$zone" ]]
-#    then
-#      echo PRESENT
-#      exit 1
-#    else
-#      echo MISSING
-#      exit 0
-#    fi
-#    ;;
-#  add_slave_zone)
-#    # insert given zone as a simple slave zone (useful for transfer)
-#    zone=$2
-#    master_ip=$3
-#    python gen_template.py $zone zonetemplate_slave.json "{ \"master_ip\" : \"$master_ip\" }" > zone.tmp
-#    pdns_api POST zone.tmp /servers/localhost/zones
-#    rm zone.tmp
-#    ;;
-#  disable|enable)
-#    template=${1}_zone.json
-#    zone=$2
-#    # fetch SOA record for the zone
-#    soa="$(pdns_api /servers/localhost/zones/$zone | jq '.records[]|select(.type=="SOA")')"
-#    python gen_template.py $zone $template "$soa" > zone.tmp
-#    # excute and filter on comment
-#    pdns_api PATCH zone.tmp /servers/localhost/zones/$zone | jq '.comments[]|select(.type=="SOA").content'
-#    rm zone.tmp
-#    ;;
-#  update)
-#    # inc soa serial record
-#    template=update_zone.json
-#    zone=$2
-#    # fetch SOA record for the zone
-#    soa="$(pdns_api /servers/localhost/zones/$zone | jq '.records[]|select(.type=="SOA")' | \
-#      perl -p -e "if(/\"content\"/) { s/(\\.\\s+)(\\d+)/\$1.(\$2+1)/e;}")"
-#    if python gen_template.py $zone $template "$soa" > zone.tmp
-#    then
-#      # excute and filter on comment
-#      pdns_api PATCH zone.tmp /servers/localhost/zones/$zone
-#    fi
-#    rm zone.tmp
-#    ;;
-#  *)
-#    # free pdns_api command
-#    pdns_api "$@"
-#    ;;
-#esac
+    def test_missing_zone(self, zone):
+        r = self.exec_pdns_api('GET', '/servers/localhost/zones/%s' % zone)
+        if r.get('name') == zone:
+            print('PRESENT')
+            return 1
+        else:
+            print('MISSING')
+            return 0
+
+    def add_slave_zone(self, zone, json_data=None):
+        gen = gen_template.gen_template()
+        gen.load_config('config.yaml')
+        gen.zonetemplate = 'zonetemplate_slave.json'
+        zone_data = gen.generate(zone, json_data)
+
+        r = self.exec_pdns_api('POST', '/servers/localhost/zones', json_data=zone_data)
+
+        return {'status_code' : r.status_code, 'json_data' : zone_data }
+
+    def get_serial(self, soa):
+#{
+#    "content": "dns0.some.com. hostmaster.some.com. 1 1800 900 604800 86400", 
+#    "disabled": true, 
+#    "name": "annecy-viande.fr", 
+#    "priority": 0, 
+#    "ttl": 86400, 
+#    "type": "SOA"
+#}
+        content = soa['content']
+        regxep = r'^\S+\s+\S+\s+(\d+)'
+        m = re.search(regxep, content)
+        if m:
+            serial = int(m.groups()[0])
+
+        return serial 
+
+    def set_serial(self, soa, serial=None):
+        if serial == None:
+            serial = self.get_serial(soa)
+            serial += 1
+
+        content = soa['content']
+        new_soa = soa.copy()
+        regxep = r'^(\S+)\s+(\S+)\s+(\d+)'
+        new_content = re.sub(regxep, r'\1 \2 %s' % serial, content)
+
+        new_soa['content'] = new_content
+
+        return new_soa
+
+    def change_SOA(self, zone, enable):
+        gen = gen_template.gen_template()
+        gen.load_config()
+
+        soa = self.get_SOA_from_json(self.get_json_zone(zone))
+        serial = self.get_serial(soa)
+        soa2 = self.set_serial(soa, serial + 1)
+
+        if enable:
+            gen.zonetemplate = 'enable_zone.json'
+            soa2['disabled'] = False
+        else:
+            gen.zonetemplate = 'disable_zone.json'
+            soa2['disabled'] = True
+
+
+        zone_data = gen.generate(zone, '{ "soa" : %s }' % json.dumps(soa2))
+
+        r = self.exec_pdns_api('PATCH', '/servers/localhost/zones/%s' % zone, json_data=zone_data)
+
+        return {'status_code' : r.status_code, 'json_data' : zone_data }
+
+    def show_SOA(self, zone):
+        z = p.get_json_zone(zone)
+        print(json.dumps(p.get_SOA_from_json(z), indent=4, sort_keys=True))
+
+############################# main code
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='pdns_zone.py 2.0')
-    print(arguments)
+
+    if arguments['help']:
+        print(__doc__.strip("\n"))
+        sys.exit()
+
     p = pdns_zone()
     p.read_apikey()
 
@@ -196,8 +239,44 @@ if __name__ == '__main__':
         p.dump_zone(arguments['ZONE'])
     elif arguments['json']:
         p.dump_json(arguments['ZONE'])
+    elif arguments['json_records']:
+        z = p.get_json_zone(arguments['ZONE'])
+        # remove NS records
+        z2 = list(filter(lambda r : r['type'] not in ('NS'), z['records']))
+        print(json.dumps(z2, indent=4, sort_keys=True))
     elif arguments['create']:
         p.create_zone(arguments['ZONE'])
     elif arguments['delete']:
         p.delete_zone(arguments['ZONE'])
-        
+    elif arguments['missing']:
+        r = p.test_missing_zone(arguments['ZONE'])
+        sys.exit(r)
+    elif arguments['add_slave_zone']:
+        json_data = '{ "master_ip" : "%s"}' % arguments['MASTER_IP'] 
+        r = p.add_slave_zone(arguments['ZONE'], json_data)
+        print(r['json_data'])
+    elif arguments['enable'] or arguments['update']:
+        p.change_SOA(arguments['ZONE'], enable=True)
+        p.show_SOA(arguments['ZONE'])
+    elif arguments['disable']:
+        p.change_SOA(arguments['ZONE'], enable=False)
+        p.show_SOA(arguments['ZONE'])
+    elif arguments['gen_template']:
+        gen = gen_template.gen_template()
+        gen.load_config()
+        gen.zonetemplate = arguments['TEMPLATE']
+        print(gen.generate(arguments['ZONE'], json_data=arguments['JSON_EXTRA']))
+    elif arguments['show_SOA']:
+        p.show_SOA(arguments['ZONE'])
+    elif arguments['api']:
+        # free API call
+        json_data = None
+        if len(arguments['<args>']) == 3:
+            json_data = arguments['<args>'][2]
+        r = p.exec_pdns_api(arguments['<args>'][0], arguments['<args>'][1], json_data=json_data)
+        if type(r) is dict:
+            print(json.dumps(r))
+        else:
+            print('"no error, response not json"')
+
+    sys.exit()
