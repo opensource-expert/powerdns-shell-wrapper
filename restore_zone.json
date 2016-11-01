@@ -1,0 +1,19 @@
+{
+    "comments": [
+        {
+            "account": "admin",
+            "content": "zone created by script {{ date }}",
+            "name": "salt",
+            "type": "cannot put comment in json, put it here",
+            "comment": "this is a jinja template, See gen_template.py"
+        }
+    ],
+    "kind": "Master",
+    "masters": [],
+    "name": "{{ domain }}",
+    "nameservers": [
+        "{{ ns1 }}",
+        "{{ ns2 }}"
+    ],
+    "records": {{ records | to_json }}
+}
