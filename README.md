@@ -1,6 +1,8 @@
 # pdns_zone.sh
 
-A small command line wrapper to manage zone via powerdns, use only API, powerdns V3.4.
+A small command line wrapper to manage zone via powerdns, use only API, powerdns V3.4, works with salt.
+
+**Full Rewrite in python to come** : [see this branch](https://github.com/opensource-expert/powerdns-shell-wrapper/tree/dev-override-cmd-line)
 
 This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/httpapi/README/).
 
