@@ -10,6 +10,7 @@ from httmock import HTTMock, all_requests, response
 
 import json
 import re
+import responses
 
 # lib to test
 import pdns_zone
@@ -121,3 +122,19 @@ def test_get_serial():
 
     assert re.match(r'^dns0.some.com.', soa2['content'])
     assert soa != soa2
+
+@responses.activate
+def test_exec_pdns_api():
+    p = pdns_zone.pdns_zone()
+    rest_url = '/servers/localhost/zones'
+    url = p.url_base + rest_url
+    # loal json fake responses
+    json_resp = json.load(open('response_servers_localhost_zones.json'))
+    responses.add(responses.GET, url,
+                      json=json_resp, status=200)
+
+    # this call return a list of zones
+    r = p.exec_pdns_api('GET', '/servers/localhost/zones')
+    assert isinstance(r, (dict, list))
+    r = json.dumps(r)
+    assert len(r) > 0

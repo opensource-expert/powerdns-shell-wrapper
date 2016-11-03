@@ -1,16 +1,50 @@
 # unit testing
 
-## install 
+## Run
 
-Depend on : `httmock`, `pytest`, `pytest-mock`
+### python unittests
+~~~
+cd test
+py.test
+~~~
 
+## bats functionnal testings
 
-## TODO: test with bats
+**WARNING**: it will try to run tests against a local powerdns server
 
 ~~~
-./pdns_zone.sh add_slave_zone somedomaine.com 1.2.4.5
-./pdns_zone.sh delete somedomaine.com
-# exemple dump
-./pdns_zone.sh json domain1.nte
-./pdns_zone.sh create annecy-viande.fr
+cd test
+./bats/bin/bats test.bats
+~~~
+
+
+## Install 
+
+
+Depend on python packages: `httmock`, `pytest`, `pytest-mock`
+
+
+### bats is a git submodule
+
+~~~
+cd test
+git submodule init
+git submodule update
+~~~
+
+## TODO
+
+add a way to create the powerdns server for testing
+
+
+## Helpers
+
+hit API directly
+
+~~~bash
+pdns_api() {
+  url_base="http://127.0.0.1:8081"
+  key=$(sed -n -e '/experimental-api-key=/ s///p' /etc/powerdns/pdns.conf)
+  wget -S --header "X-API-Key: $key" $extra "${url_base}$1" -O-
+}
 ~~~

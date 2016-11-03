@@ -17,7 +17,7 @@ Usage:
  ./pdns_zone.py add_slave_zone ZONE MASTER_IP
  ./pdns_zone.py gen_template TEMPLATE ZONE [JSON_EXTRA]
  ./pdns_zone.py show_SOA ZONE
- ./pdns_zone.py api <args>...
+ ./pdns_zone.py api METHOD URL [JSON_EXTRA]
  ./pdns_zone.py (help | -h | --help)
 
 Options:
@@ -144,6 +144,9 @@ class pdns_zone:
             r = self.exec_pdns_api('DELETE', '/servers/localhost/zones/%s' % zone)
         except ValueError as e:
             print(e)
+            return 1
+
+        return 0
 
     def test_missing_zone(self, zone):
         r = self.exec_pdns_api('GET', '/servers/localhost/zones/%s' % zone)
@@ -247,7 +250,8 @@ if __name__ == '__main__':
     elif arguments['create']:
         p.create_zone(arguments['ZONE'])
     elif arguments['delete']:
-        p.delete_zone(arguments['ZONE'])
+        r = p.delete_zone(arguments['ZONE'])
+        sys.exit(r)
     elif arguments['missing']:
         r = p.test_missing_zone(arguments['ZONE'])
         sys.exit(r)
@@ -270,12 +274,9 @@ if __name__ == '__main__':
         p.show_SOA(arguments['ZONE'])
     elif arguments['api']:
         # free API call
-        json_data = None
-        if len(arguments['<args>']) == 3:
-            json_data = arguments['<args>'][2]
-        r = p.exec_pdns_api(arguments['<args>'][0], arguments['<args>'][1], json_data=json_data)
-        if type(r) is dict:
-            print(json.dumps(r))
+        r = p.exec_pdns_api(arguments['METHOD'], arguments['URL'], json_data=arguments['JSON_EXTRA'])
+        if type(r) in (dict, list):
+            print(json.dumps(r, indent=4, sort_keys=True))
         else:
             print('"no error, response not json"')
 

@@ -1,0 +1,101 @@
+[
+    {
+        "dnssec": false, 
+        "id": "client1-domain.fr.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "client1-domain.fr", 
+        "notified_serial": 1, 
+        "serial": 1, 
+        "url": "/servers/localhost/zones/client1-domain.fr."
+    }, 
+    {
+        "dnssec": false, 
+        "id": "more-domain.com.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "more-domain.com", 
+        "notified_serial": 1, 
+        "serial": 1, 
+        "url": "/servers/localhost/zones/more-domain.com."
+    }, 
+    {
+        "dnssec": false, 
+        "id": "somedomain4.fr.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "somedomain4.fr", 
+        "notified_serial": 1, 
+        "serial": 1, 
+        "url": "/servers/localhost/zones/somedomain4.fr."
+    }, 
+    {
+        "dnssec": false, 
+        "id": "deautnsomedomain.fr.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "deautnsomedomain.fr", 
+        "notified_serial": 1, 
+        "serial": 1, 
+        "url": "/servers/localhost/zones/deautnsomedomain.fr."
+    }, 
+    {
+        "dnssec": false, 
+        "id": "client7.com.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "client7.com", 
+        "notified_serial": 1, 
+        "serial": 1, 
+        "url": "/servers/localhost/zones/client7.com."
+    }, 
+    {
+        "dnssec": false, 
+        "id": "annecy-viande.com.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "annecy-viande.com", 
+        "notified_serial": 1, 
+        "serial": 1, 
+        "url": "/servers/localhost/zones/annecy-viande.com."
+    }, 
+    {
+        "dnssec": false, 
+        "id": "annecy-viande.fr.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "annecy-viande.fr", 
+        "notified_serial": 0, 
+        "serial": 1, 
+        "url": "/servers/localhost/zones/annecy-viande.fr."
+    }, 
+    {
+        "dnssec": false, 
+        "id": "somedomain.fr.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "somedomain.fr", 
+        "notified_serial": 2, 
+        "serial": 2, 
+        "url": "/servers/localhost/zones/somedomain.fr."
+    }, 
+    {
+        "dnssec": false, 
+        "id": "somedomaine.com.", 
+        "kind": "Master", 
+        "last_check": 0, 
+        "masters": [], 
+        "name": "somedomaine.com", 
+        "notified_serial": 1, 
+        "serial": 1, 
+        "url": "/servers/localhost/zones/somedomaine.com."
+    }
+]
