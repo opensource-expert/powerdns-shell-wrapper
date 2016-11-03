@@ -108,7 +108,7 @@ will output:
       "changetype": "REPLACE",
       "records":
         [
-          {"disabled": false, "name": "somedomaine.com", "priority": 0, "ttl": 86400, "content": "dns0.webannecy.com. hostmaster.webannecy.com. 1 1800 900 604800 86400", "type": "SOA"}
+          {"disabled": true, "name": "somedomaine.com", "priority": 0, "ttl": 86400, "content": "dns0.webannecy.com. hostmaster.webannecy.com. 1 1800 900 604800 86400", "type": "SOA"}
         ],
       "comments":
         [
