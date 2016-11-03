@@ -1,4 +1,4 @@
-# unit testing
+# testing
 
 ## Run
 
@@ -17,11 +17,9 @@ cd test
 ./bats/bin/bats test.bats
 ~~~
 
-
 ## Install 
 
-
-Depend on python packages: `httmock`, `pytest`, `pytest-mock`
+Depend on python packages: `httmock`, `pytest`, `pytest-mock`, `responses`
 
 
 ### bats is a git submodule
@@ -35,7 +33,6 @@ git submodule update
 ## TODO
 
 add a way to create the powerdns server for testing
-
 
 ## Helpers
 
