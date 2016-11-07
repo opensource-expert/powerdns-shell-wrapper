@@ -1,8 +1,8 @@
 # pdns_zone.py
 
-Shell command line wrapper to manage DNS zones for PowerDNS, use only API, for powerdns V3.4.
+Command line wrapper to manage zones for powerdns, V3.4, works with salt.
 
-This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/httpapi/README/).
+This wrapper is designed to work with [powerDNS api](https://doc.powerdns.com/3/httpapi/README/) only.
 
 **Note:** Find other PowerDNS Frontends (graphic or command line) [here](https://github.com/PowerDNS/pdns/wiki/WebFrontends).
 
