@@ -7,7 +7,7 @@ Command line wrapper to manage pdns zone (usable with salt)
 
 Usage:
  ./pdns_zone.py create ZONE [JSON_EXTRA]
- ./pdns_zone.py delete ZONE
+ ./pdns_zone.py delete ZONES ...
  ./pdns_zone.py missing ZONE
  ./pdns_zone.py list
  ./pdns_zone.py dump ZONE
@@ -131,6 +131,9 @@ class pdns_zone:
         print(self.exec_pdns_api('GET', '/servers/localhost/zones/%s' % zone, text=True))
 
     def create_zone(self, zone, json_data=None):
+        if not isinstance(zone, (str, unicode)):
+            raise ValueError("only string")
+
         gen = gen_template.gen_template()
         gen.load_config()
         zone_data = gen.generate(zone, json_data)
@@ -149,7 +152,11 @@ class pdns_zone:
         return 0
 
     def test_missing_zone(self, zone):
-        r = self.exec_pdns_api('GET', '/servers/localhost/zones/%s' % zone)
+        try:
+            r = self.exec_pdns_api('GET', '/servers/localhost/zones/%s' % zone)
+        except ValueError as e:
+            r = {}
+
         if r.get('name') == zone:
             print('PRESENT')
             return 1
@@ -250,7 +257,10 @@ if __name__ == '__main__':
     elif arguments['create']:
         p.create_zone(arguments['ZONE'])
     elif arguments['delete']:
-        r = p.delete_zone(arguments['ZONE'])
+        error = 0
+        for z in arguments['ZONES']:
+            r = p.delete_zone(z)
+            error += r
         sys.exit(r)
     elif arguments['missing']:
         r = p.test_missing_zone(arguments['ZONE'])

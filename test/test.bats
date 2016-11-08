@@ -1,22 +1,38 @@
 #!/bin/bash
 #
-# functionnal testing see README.md
+# functionnal testing for ../pdns_zone.py see README.md
 #
 
 
+# global variables
 zone=test.myzone
 pdns_zone=../pdns_zone.py
 # assuming the dns server is on the same server
 dns=$(hostname -f)
+log=./bats.log
+
+# for some debuging
+test_zone() {
+  local regexp=[^a-z.-]
+  if [[ "$1" =~ $regexp ]]
+  then
+    echo "zone error: $1" >> $log
+    exit 1
+  fi
+}
 
 setup() {
+  # test_zone should always log nothing
+  test_zone "$zone"
   $pdns_zone create $zone
 }
 
 teardown() {
-  if ! $pdns_zone missing $zone > /dev/null
+  test_zone "$zone"
+  # test present
+  if $pdns_zone api GET "/servers/localhost/zones/$zone" > /dev/null
   then
-    $pdns_zone delete $zone
+    $pdns_zone api DELETE "/servers/localhost/zones/$zone"
   fi
 }
 
@@ -26,6 +42,22 @@ teardown() {
   [[ ! -z "$output" ]]
 }
 
+@test "delete multiples zones" {
+  # array
+  all_zone=()
+  for i in $(seq 1 5)
+  do
+    somezone="${i}-${zone}"
+    $pdns_zone create $somezone
+    all_zone+=($somezone)
+  done
+
+  # ${all_zone[@]} => array all values
+  run $pdns_zone delete ${all_zone[@]}
+  [[ $status -eq 0 ]]
+  [[ -z "$output" ]]
+}
+
 @test "create and delete zone $zone" {
   [[ ! -z "$dns" ]]
   # ./pdns_zone.py create ZONE [JSON_EXTRA]
@@ -33,7 +65,7 @@ teardown() {
   run $pdns_zone create $somezone
   dig +short $somezone @$dns | grep '10.0.0.2'
   run $pdns_zone delete $somezone
-  [ $status -eq 0 ]
+  [[ $status -eq 0 ]]
   [[ -z "$output" ]]
   [[ "$dns" =~ ^dns0 ]]
   # not always right, we must test a distinct record
@@ -43,23 +75,25 @@ teardown() {
 @test "zone is missing" {
   # ./pdns_zone.py missing ZONE
   run $pdns_zone missing $$${zone}
+  [[ $status -eq 0 ]]
+  [[ "$output" == MISSING ]]
 }
 
 @test "listing zones" {
   # ./pdns_zone.py list
   run $pdns_zone list
   [[ ! -z "$output" ]]
-  [ $status -eq 0 ]
+  [[ $status -eq 0 ]]
 }
 
 @test "dumping a zone in bind fromat" {
   # ./pdns_zone.py dump ZONE
   # without argument must fail
   run $pdns_zone dump
-  [ $status -eq 1 ]
+  [[ $status -eq 1 ]]
   
   run $pdns_zone dump $zone
-  [ $status -eq 0 ]
+  [[ $status -eq 0 ]]
   [[ ! -z "$output" ]]
   regexp="^${zone}\."
   # extract SOA record line
@@ -140,7 +174,6 @@ teardown() {
 }
 
 @test "api wrapper direct call" {
-  
   # ./pdns_zone.py api <args>...
   # also done in test gen_template above
 
