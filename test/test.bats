@@ -64,12 +64,31 @@ teardown() {
   somezone=$$${zone}
   run $pdns_zone create $somezone
   dig +short $somezone @$dns | grep '10.0.0.2'
+
   run $pdns_zone delete $somezone
   [[ $status -eq 0 ]]
   [[ -z "$output" ]]
   [[ "$dns" =~ ^dns0 ]]
   # not always right, we must test a distinct record
   [[ -z "$(dig +short www.$somezone @$dns)" ]]
+}
+
+@test "create zone $zone with json data" {
+  # ./pdns_zone.py create ZONE JSON_EXTRA
+  ip=1.2.3.4
+  mx=me.mailserver.net
+  somezone=$$${zone}
+  run $pdns_zone create $somezone "{ \"mailserver\" : \"$mx\", \"web_ip\" : \"$ip\" }"
+  run dig +short $somezone @$dns
+  [[ $status -eq 0 ]]
+  [[ ! -z "$(echo "$output" | grep "$ip")" ]]
+
+  run dig +short $somezone mx @$dns
+  [[ $status -eq 0 ]]
+  [[ ! -z "$(echo "$output" | grep "$mx")" ]]
+
+  # cleanup
+  $pdns_zone delete $somezone
 }
 
 @test "zone is missing" {
