@@ -255,7 +255,7 @@ if __name__ == '__main__':
         z2 = list(filter(lambda r : r['type'] not in ('NS'), z['records']))
         print(json.dumps(z2, indent=4, sort_keys=True))
     elif arguments['create']:
-        p.create_zone(arguments['ZONE'])
+        p.create_zone(arguments['ZONE'], arguments['JSON_EXTRA'])
     elif arguments['delete']:
         error = 0
         for z in arguments['ZONES']:
