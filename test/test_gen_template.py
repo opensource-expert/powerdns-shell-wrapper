@@ -5,6 +5,7 @@ sys.path.append('..')
 
 import os
 import json
+import re
 
 import gen_template
 
@@ -35,6 +36,7 @@ spf: 'v=spf1 mx a ~all'
 def test_gen_template():
     g = gen_template.gen_template()
     assert g.zonetemplate == 'zonetemplate.json'
+    assert re.search(r'^\d{10}$', g.d['serial'])
 
 def test_load_config():
     g = gen_template.gen_template()

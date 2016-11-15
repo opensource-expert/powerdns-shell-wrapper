@@ -28,6 +28,8 @@ class gen_template:
 
         self.d['domain'] = None
 
+        modif_count = 1
+
         #self.default, you can override with config.yaml
         # See config_example.yaml and load_config()
         self.d['ns1'] = 'ns2.example.net'
@@ -38,6 +40,7 @@ class gen_template:
         self.d['spf'] = 'v=spf1 mx a ~all'
 
         self.d['date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        self.d['serial'] = '%s%02d' % (time.strftime('%Y%m%d'), modif_count)
         self.d['soa'] = None
         self.d['cmd_line_json'] = None
 

@@ -17,7 +17,7 @@
     ],
     "records": [
         {
-            "content": "{{ ns1 }}. {{ hostmaster }}. 1 1800 900 604800 86400",
+            "content": "{{ ns1 }}. {{ hostmaster }}. {{serial}} 1800 900 604800 86400",
             "disabled": false,
             "name": "{{ domain }}",
             "ttl": 86400,
